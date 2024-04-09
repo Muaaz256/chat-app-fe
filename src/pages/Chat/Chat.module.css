@@ -1,0 +1,10 @@
+.whole-page {
+  height: 100vh;
+}
+
+.users-list {
+  border-right: 1px solid black;
+}
+
+.chat-section {
+}
