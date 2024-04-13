@@ -16,7 +16,7 @@ export const ChatContext = React.createContext({
   selectedUserId: null,
   setSelectedUserId: (userId) => {},
   messages: {},
-  setMessages: () => {},
+  sendMessage: (message) => {},
   unSeenMessagesCount: {},
   setUnSeenMessagesCount: () => {}
 });
@@ -30,7 +30,10 @@ const ChatContextProvider = ({ children }) => {
   const onUserJoined = (newUser) => {
     if (newUser.id === MY_DATA.id) return;
     setChatUsers((prevState) => {
-      if (Object.keys(prevState).length === 0) setSelectedUserId(newUser.id);
+      if (Object.keys(prevState).length === 0) {
+        console.log('hello');
+        setSelectedUserId(newUser.id);
+      }
       return {
         ...prevState,
         [newUser.id]: {
@@ -54,12 +57,66 @@ const ChatContextProvider = ({ children }) => {
     });
   };
 
-  const onNewMessage = (newMessage) => {
-    console.log(newMessage);
+  const onReceiveMessage = (message) => {
+    const { from } = message;
+    setMessages((prevState) => ({
+      ...prevState,
+      [from]: [
+        ...prevState[from],
+        {
+          message: message.message,
+          time: message.time,
+          isReceived: true
+        }
+      ]
+    }));
+    if (from === selectedUserId) return;
+    setUnSeenMessagesCount((prevState) => {
+      return {
+        ...prevState,
+        [from]: prevState[from] + 1
+      };
+    });
+  };
+
+  const sendMessage = (message) => {
+    socket.emit('new_message', {
+      ...message,
+      from: MY_DATA.id,
+      to: selectedUserId
+    });
+    setMessages((prevState) => ({
+      ...prevState,
+      [selectedUserId]: [
+        ...prevState[selectedUserId],
+        {
+          ...message,
+          isReceived: false
+        }
+      ]
+    }));
   };
 
   const onUserLeft = (userData) => {
     setChatUsers((prevState) => {
+      const newState = {
+        ...prevState
+      };
+      delete newState[userData.id];
+      return {
+        ...newState
+      };
+    });
+    setMessages((prevState) => {
+      const newState = {
+        ...prevState
+      };
+      delete newState[userData.id];
+      return {
+        ...newState
+      };
+    });
+    setUnSeenMessagesCount((prevState) => {
       const newState = {
         ...prevState
       };
@@ -80,7 +137,7 @@ const ChatContextProvider = ({ children }) => {
     const newUsers = {};
     const newMessages = {};
     const newMessagesCount = {};
-    Object.entries(users).forEach(([key, value]) => {
+    Object.values(users).forEach((value) => {
       newUsers[value.id] = {
         ...value
       };
@@ -102,17 +159,22 @@ const ChatContextProvider = ({ children }) => {
     socket.on('connect', onSocketConnect);
     socket.on('get_connected_users', onGetConnectedUsers);
     socket.on('user_joined', onUserJoined);
-    socket.on('new_message', onNewMessage);
     socket.on('user_left', onUserLeft);
 
     return () => {
       socket.off('user_joined', onUserJoined);
-      socket.off('new_message', onNewMessage);
       socket.off('user_left', onUserLeft);
       socket.off('connect', onSocketConnect);
       socket.off('get_connected_users', onGetConnectedUsers);
     };
   }, []);
+
+  useEffect(() => {
+    socket.on('receive_message', onReceiveMessage);
+    return () => {
+      socket.off('receive_message', onReceiveMessage);
+    };
+  }, [selectedUserId]);
 
   return (
     <ChatContext.Provider
@@ -124,7 +186,8 @@ const ChatContextProvider = ({ children }) => {
         messages,
         setMessages,
         unSeenMessagesCount,
-        setUnSeenMessagesCount
+        setUnSeenMessagesCount,
+        sendMessage
       }}
     >
       {children}

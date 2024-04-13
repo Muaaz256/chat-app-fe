@@ -10,8 +10,14 @@ import classes from './Messages.module.css';
 const Messages = ({ messages }) => {
   return (
     <Flex className={classes['messages-container']} vertical>
-      <Message message="hello" isReceived />
-      <Message message="world" />
+      {messages?.map((message, index) => (
+        <Message
+          key={index}
+          message={message.message}
+          time={message.time}
+          isReceived={message.isReceived}
+        />
+      ))}
     </Flex>
   );
 };

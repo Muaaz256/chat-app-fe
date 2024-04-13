@@ -1,3 +1,4 @@
+import React from 'react';
 import { Row } from 'antd';
 import Messages from '../Messages';
 import MessageInput from '../MessageInput';
@@ -30,4 +31,4 @@ const ChattingArea = ({ selectedUser, messages }) => {
   );
 };
 
-export default ChattingArea;
+export default React.memo(ChattingArea);

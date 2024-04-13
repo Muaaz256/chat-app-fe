@@ -51,7 +51,7 @@ const UsersList = () => {
             <UserCard
               user={user}
               selectedUserId={selectedUserId}
-              messagesCount={unSeenMessagesCount[user.id]}
+              unSeenMessagesCount={unSeenMessagesCount[user.id]}
             />
           </div>
         ))}
