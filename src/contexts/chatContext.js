@@ -31,7 +31,6 @@ const ChatContextProvider = ({ children }) => {
     if (newUser.id === MY_DATA.id) return;
     setChatUsers((prevState) => {
       if (Object.keys(prevState).length === 0) {
-        console.log('hello');
         setSelectedUserId(newUser.id);
       }
       return {
